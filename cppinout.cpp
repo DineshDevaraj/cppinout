@@ -2,7 +2,7 @@
 /**
  *
  * Author  : D.Dinesh
- *             dinesh@techybook.com
+ *           dinesh@techybook.com
  * Licence : Refer licence file
  *
  **/
@@ -32,21 +32,21 @@ struct Tokens
 {
     enum Value
     {
-        Space                = ' ' ,
-        LineEnd                = ';' ,
-        CharBegin            = '\'',
-        Directive            = '#' ,
-        ScopeResol            = ':' ,
-        StringBegin            = '"' ,
+        Space             = ' ' ,
+        LineEnd           = ';' ,
+        CharBegin         = '\'',
+        Directive         = '#' ,
+        ScopeResol        = ':' ,
+        StringBegin       = '"' ,
         
-        OpenParan            = '(' ,    /* open paranthesis   */
-        CloseParan            = ')' ,    /* close paranthesis  */
-        OpenBraces            = '{' ,    /* open curly braces  */
-        CloseBraces            = '}' ,    /* close curly braces */
+        OpenParan         = '(' ,    /* open paranthesis   */
+        CloseParan        = ')' ,    /* close paranthesis  */
+        OpenBraces        = '{' ,    /* open curly braces  */
+        CloseBraces       = '}' ,    /* close curly braces */
         
-        Identifier            ,
-        MultiLineComment    ,
-        SingleLineComment    ,
+        Identifier        ,
+        MultiLineComment  ,
+        SingleLineComment ,
     };
 };
 
@@ -190,7 +190,6 @@ Tokens_t next_token(Buffer_t &cr, char st[])
                        break;
                    }
                    bwl=0;
-         
       }
       tk++; cr++;
    }
@@ -232,7 +231,7 @@ void parse_buffer(char *hay)
            case Tokens::CloseParan :
            {
               skip_space(cr);
-               tt=next_token(cr, tk);
+              tt=next_token(cr, tk);
               if(Tokens::OpenBraces == tt 
                  and previden != "if"
                  and previden != "for"
