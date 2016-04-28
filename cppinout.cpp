@@ -196,79 +196,86 @@ Tokens_t next_token(Buffer_t &cr, char st[])
    return tt;
 }
 
-void parse_buffer(char *hay)
+const unsigned int MAX_BUFFER_SIZE = (8*1024);
+const unsigned int MAX_BUFFER_INDEX = (MAX_BUFFER_SIZE-1);
+
+char hay[MAX_BUFFER_SIZE];
+
+void parse_file(FILE *fh)
 {
+   int len = 0;
    Tokens_t tt; /* token type */
-   Buffer_t cr(hay);
    Stdstr previden;
-   while(*cr)
+   while(!feof(fh))
    {
-       char tk[256] = {};
-       tt=next_token(cr, tk);
-       #if(1==DEBUG)
-       printf("Token (%d %c) : <%s> %u,%d\n", tt, tt, tk, cr.nline, cr.ncol);
-       #endif
-       switch(tt)
-       {
-           case Tokens::Identifier :
-                if(0 == strcasecmp(tk, "return")) 
-                {
-                    printf("         ");
-                    printf("return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
-                }
-                previden=tk;
-                break;
-
-           case Tokens::Space   :
-           case Tokens::LineEnd :        
-                skip_space(cr);
-                break;
-
-           case Tokens::OpenParan :     
-                   skip_args(cr);
-                break;
-
-           case Tokens::CloseParan :
-           {
-              skip_space(cr);
-              tt=next_token(cr, tk);
-              if(Tokens::OpenBraces == tt 
-                 and previden != "if"
-                 and previden != "for"
-                 and previden != "while"
-                 and previden != "switch")
-                  printf("Function entry  : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
-              break;
-           }
-
-           case Tokens::Directive :
-                skip_single_line(cr);
-                break;           
-           case Tokens::CharBegin : 
-                skip_char(cr);
-                break;
-           case Tokens::StringBegin : 
-                skip_string(cr);
-                break;
-           case Tokens::MultiLineComment : 
-                skip_multiline_comment(cr);
-                break;
-           case Tokens::SingleLineComment : 
-                skip_single_line(cr);
-                break;
-           #if(2==DEBUG)
-           default : printf("Invalid token (%d - %c) : %u, %d : %d\n", 
-                             tt, tt, cr.nline, cr.ncol, cr.offset());
-           #endif
+	  len = fread(hay, sizeof(char), MAX_BUFFER_INDEX, fh);
+	  hay[len] = 0; Buffer_t cr(hay);
+      while(*cr)
+      {
+          char tk[256] = {};
+          tt=next_token(cr, tk);
+          #if(1==DEBUG)
+          printf("Token (%d %c) : <%s> %u,%d\n", tt, tt, tk, cr.nline, cr.ncol);
+          #endif
+          switch(tt)
+          {
+              case Tokens::Identifier :
+                   if(0 == strcasecmp(tk, "return")) 
+                   {
+                       printf("         ");
+                       printf("return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
+                   }
+                   previden=tk;
+                   break;
+   
+              case Tokens::Space   :
+              case Tokens::LineEnd :        
+                   skip_space(cr);
+                   break;
+   
+              case Tokens::OpenParan :     
+                      skip_args(cr);
+                   break;
+   
+              case Tokens::CloseParan :
+              {
+                 skip_space(cr);
+                 tt=next_token(cr, tk);
+                 if(Tokens::OpenBraces == tt 
+                    and previden != "if"
+                    and previden != "for"
+                    and previden != "while"
+                    and previden != "switch")
+                     printf("Function entry  : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
+                 break;
+              }
+   
+              case Tokens::Directive :
+                   skip_single_line(cr);
+                   break;           
+              case Tokens::CharBegin : 
+                   skip_char(cr);
+                   break;
+              case Tokens::StringBegin : 
+                   skip_string(cr);
+                   break;
+              case Tokens::MultiLineComment : 
+                   skip_multiline_comment(cr);
+                   break;
+              case Tokens::SingleLineComment : 
+                   skip_single_line(cr);
+                   break;
+              #if(2==DEBUG)
+              default : printf("Invalid token (%d - %c) : %u, %d : %d\n", 
+                                tt, tt, cr.nline, cr.ncol, cr.offset());
+              #endif
+         }
       }
    }
 }
 
-char filebody[8*1024];
-
 int main(int argc, char *argv[])
 {
-   int len = 0;
    if(argc < 2) 
    {
        printf("usage> %s <C/C++ file name>\n", argv[0]);
@@ -280,8 +287,6 @@ int main(int argc, char *argv[])
        printf("%s : %s\n", strerror(errno), argv[1]); 
        return 1;
    }
-   len = fread(filebody, sizeof(char), sizeof filebody, fh);
-   filebody[len] = 0;
-   parse_buffer(filebody);
+   parse_file(fh);
    return 0;
 }
