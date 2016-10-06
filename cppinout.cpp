@@ -104,6 +104,9 @@ struct Buffer_t
    { return size_t(cp-sp); }
 };
 
+/* function declarations */
+Tokens_t next_token(Buffer_t &, char []);
+
 void skip_multiline_comment(Buffer_t &cr)
 {
    while(*cr && cr[1])
@@ -130,6 +133,20 @@ void skip_untill(Buffer_t &cr, const char dl)
       if('\\' == *cr) cr++;   /* skip this and next characted
                            as this can be escape sequence */
    cr++;                  /* skip the delimeter at the last */
+}
+
+void skip_function_def(Buffer_t &cr, char tk[])
+{
+   Tokens_t tt;
+   int nocb = 1; /* number of open curly barces */
+   while(nocb)
+   {
+      tt=next_token(cr, tk);
+      if(tt == Tokens::OpenBraces)
+         nocb++;
+      else if(tt == Tokens::CloseBraces)
+         nocb--;
+   }
 }
 
 /* is - identifier string */
@@ -213,9 +230,10 @@ void parse_buffer(char *hay)
    Stdstr previden;
 
    rtsl = 1;
-   rtsp = hay;
    Buffer_t cr(hay);
+   skip_space(cr);
 
+   rtsp = cr.cp;
    static char hl[128];   /* horizontal line */
    memset(hl, '-', 100);
 
@@ -230,19 +248,19 @@ void parse_buffer(char *hay)
       {
          case Tokens::Identifier :
             if(0 == strcasecmp(tk, "return"))
-				{
+            {
                printf("   return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
-				}
-				else if(0 == strcmp(tk, "class") or 0 == strcmp(tk, "struct"))
-				{
-					previden=tk;
-					rtsl=cr.nline;
-					skip_space(cr);
-					tt=next_token(cr, tk); /* This gets the class name */
-					printf("\n%s\n\n", hl);
-					printf("%s %s\n\n", previden.data(), tk);
-					printf("   centry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
-				}
+            }
+            else if(0 == strcmp(tk, "class") or 0 == strcmp(tk, "struct"))
+            {
+               previden=tk;
+               rtsl=cr.nline;
+               skip_space(cr);
+               tt=next_token(cr, tk); /* This gets the class name */
+               printf("\n%s\n\n", hl);
+               printf("%s %s\n\n", previden.data(), tk);
+               printf("   centry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
+            }
             previden=tk;
             iend=cr.cp;
             break;
@@ -271,6 +289,9 @@ void parse_buffer(char *hay)
                printf("\n%s\n\n", hl);
                printf("%.*s%.*s\n\n", iend-rtsp, rtsp, bssp-iend, iend);
                printf("   fentry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
+               skip_function_def(cr, tk);
+               skip_space(cr);
+               rtsp=cr.cp;
             }
             else switch(tt)
             {
