@@ -175,8 +175,8 @@ Tokens_t next_token(Buffer_t &cr, char st[])
                 break;
 
        case ':'  : if(':' == cr[1])
-			{ cr++; tt = Tokens::ScopeResol; }
-			break;
+         { cr++; tt = Tokens::ScopeResol; }
+         break;
 
        case '/'  : if('*' == cr[1])
                   tt=Tokens::MultiLineComment;
@@ -204,11 +204,13 @@ Tokens_t next_token(Buffer_t &cr, char st[])
 
 void parse_buffer(char *hay)
 {
-   char *iend;       /* identifier end       */
-   Tokens_t tt;      /* token type           */
-   int fcount = 0;   /* number of functions  */
+   char *iend;       /* identifier end                */
+   char *rtsp;       /* return type starting position */
+   Tokens_t tt;      /* token type                    */
+   int fcount = 0;   /* number of functions           */
    Buffer_t cr(hay);
    Stdstr previden;
+   rtsp = cr.cp;
    while(*cr)
    {
       char tk[256] = {};
@@ -226,8 +228,11 @@ void parse_buffer(char *hay)
             break;
 
          case Tokens::Space   :
+            skip_space(cr);
+            break;
          case Tokens::LineEnd :
             skip_space(cr);
+            rtsp = cr.cp;
             break;
 
          case Tokens::OpenParan :
@@ -247,7 +252,8 @@ void parse_buffer(char *hay)
             {
                fcount++;
                int len = cr.cp-iend-1;
-               printf("\nFunction %s%.*s\n", previden.data(), len, iend);
+               printf("\n---------------------------------------------------\n\n");
+               printf("%.*s%.*s\n", iend-rtsp-1, rtsp, len, iend);
                if('\n' != iend[len-1]) printf("\n");
                printf("   entry  : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
             }
@@ -271,6 +277,8 @@ void parse_buffer(char *hay)
 
          case Tokens::Directive :
             skip_single_line(cr);
+            skip_space(cr);
+            rtsp = cr.cp;
             break;
          case Tokens::CharBegin :
             skip_char(cr);
@@ -284,10 +292,14 @@ void parse_buffer(char *hay)
          case Tokens::SingleLineComment :
             skip_single_line(cr);
             break;
-			case Tokens::ScopeResol :
-				skip_space(cr);
-				tt=next_token(cr, tk);
-				break;
+         case Tokens::ScopeResol :
+            skip_space(cr);
+            tt=next_token(cr, tk);
+            break;
+         case Tokens::CloseBraces :
+            skip_space(cr);
+            rtsp = cr.cp;
+            break;
          #if(2==DEBUG)
          default : printf("Invalid token (%d - %c) : %u, %d : %d\n",
                            tt, tt, cr.nline, cr.ncol, cr.offset());
