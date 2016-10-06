@@ -175,8 +175,8 @@ Tokens_t next_token(Buffer_t &cr, char st[])
                 break;
 
        case ':'  : if(':' == cr[1])
-                  tt = Tokens::ScopeResol;
-                break;
+			{ cr++; tt = Tokens::ScopeResol; }
+			break;
 
        case '/'  : if('*' == cr[1])
                   tt=Tokens::MultiLineComment;
@@ -284,6 +284,10 @@ void parse_buffer(char *hay)
          case Tokens::SingleLineComment :
             skip_single_line(cr);
             break;
+			case Tokens::ScopeResol :
+				skip_space(cr);
+				tt=next_token(cr, tk);
+				break;
          #if(2==DEBUG)
          default : printf("Invalid token (%d - %c) : %u, %d : %d\n",
                            tt, tt, cr.nline, cr.ncol, cr.offset());
