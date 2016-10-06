@@ -372,9 +372,9 @@ void parse_buffer(char *hay)
          case Tokens::OpenParan :
          {
             skip_args(cr);
+            /* close paranthesis loop */
             for(int cpl = 1; cpl; )
             {
-               cpl = 0;                /* close paranthesis loop */
                bssp = cr.cp;
                skip_space(cr);
                tt=next_token(cr, tk);
@@ -384,6 +384,7 @@ void parse_buffer(char *hay)
                   and previden != "while"
                   and previden != "switch")
                {
+                  cpl=0;
                   fcount++;
                   printf("\n%s\n\n", hl);
                   printf("%.*s%.*s\n\n", iend-rtsp, rtsp, bssp-iend, iend);
@@ -395,28 +396,21 @@ void parse_buffer(char *hay)
                }
                else switch(tt)
                {
-                  case Tokens::Colon :
-                  {
-                     cpl=1;
-                     break;
-                  }
+                  case Tokens::Colon : break;
                   case Tokens::Identifier :
-                  if(0 == strcmp(tk, "const"))
                   {
-                     cpl=1;
-                     break;
+                     if(0 == strcmp(tk, "const"))
+                        break;
+                     else goto TTB;
                   }
-                  else goto TTB;
                   case Tokens::MultiLineComment :
                   {
                      skip_multiline_comment(cr);
-                     cpl=1;
                      break;
                   }
                   case Tokens::SingleLineComment :
                   {
                      skip_single_line(cr);
-                     cpl=1;
                      break;
                   }
                   default : goto TTB;
