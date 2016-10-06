@@ -106,6 +106,7 @@ struct Buffer_t
 
 /* function declarations */
 Tokens_t next_token(Buffer_t &, char []);
+void default_actions(Buffer_t &, Tokens_t, int &, char * &);
 
 void skip_multiline_comment(Buffer_t &cr)
 {
@@ -137,12 +138,15 @@ void skip_untill(Buffer_t &cr, const char dl)
 
 void skip_function_def(Buffer_t &cr)
 {
-   Tokens_t tt;
+   int sh;        /* space holder */
+   char *cp;      /* char pointer */
+   Tokens_t tt;   /* token type   */
+
    /* number of open curly barces */
    for(int nocb = 1; nocb; )
    {
       char tk[256] = {};
-      tt=next_token(cr, tk);
+		tt=next_token(cr, tk);
       switch(tt)
       {
          case Tokens::OpenBraces :
@@ -155,6 +159,7 @@ void skip_function_def(Buffer_t &cr)
               if(0 == strcasecmp(tk, "return"))
                  printf("   return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
               break;
+         default : default_actions(cr, tt, sh, cp);
       }
    }
 }
@@ -165,6 +170,64 @@ void get_identifier(Buffer_t &cr, char is[])
    *is = *cr; /* copy the first character as it is */
    while('_' == cr[1] or isalnum(cr[1]))
    { is++; cr++; *is = *cr; }
+}
+
+void default_actions(Buffer_t &cr, Tokens_t tt, int &rtsl, char * &rtsp)
+{
+   char tk[256] = {};
+   switch(tt) /* ttb - token type branch */
+   {
+      case Tokens::Space :
+      {
+         skip_space(cr);
+         break;
+      }
+      case Tokens::OpenParan :
+      {
+         skip_args(cr);
+         break;
+      }
+      case Tokens::Directive :
+      {
+         skip_single_line(cr);
+         skip_space(cr);
+         rtsl=cr.nline;
+         rtsp=cr.cp;
+         break;
+      }
+      case Tokens::CharBegin :
+      {
+         skip_char(cr);
+         break;
+      }
+      case Tokens::StringBegin :
+      {
+         skip_string(cr);
+         break;
+      }
+      case Tokens::MultiLineComment :
+      {
+         skip_multiline_comment(cr);
+         break;
+      }
+      case Tokens::SingleLineComment :
+      {
+         skip_single_line(cr);
+         break;
+      }
+      case Tokens::ScopeResol :
+      {
+         skip_space(cr);
+         tt=next_token(cr, tk);
+         break;
+      }
+      default :
+      {
+         skip_space(cr);
+         rtsl=cr.nline;
+         rtsp=cr.cp;
+      }
+  }
 }
 
 /* st -> string token */
@@ -257,6 +320,7 @@ void parse_buffer(char *hay)
       TTB : switch(tt) /* ttb - token type branch */
       {
          case Tokens::Identifier :
+         {
             if(0 == strcmp(tk, "class") or 0 == strcmp(tk, "struct"))
             {
                previden=tk;
@@ -270,14 +334,7 @@ void parse_buffer(char *hay)
             previden=tk;
             iend=cr.cp;
             break;
-
-         case Tokens::Space   :
-            skip_space(cr);
-            break;
-
-         case Tokens::OpenParan :
-               skip_args(cr);
-            break;
+         }
 
          case Tokens::CloseParan : for(int cpl = 1; cpl; )
          {
@@ -315,40 +372,8 @@ void parse_buffer(char *hay)
          }
          break;
 
-         case Tokens::Directive :
-            skip_single_line(cr);
-            skip_space(cr);
-            rtsl=cr.nline;
-            rtsp=cr.cp;
-            break;
-         case Tokens::CharBegin :
-            skip_char(cr);
-            break;
-         case Tokens::StringBegin :
-            skip_string(cr);
-            break;
-         case Tokens::MultiLineComment :
-            skip_multiline_comment(cr);
-            break;
-         case Tokens::SingleLineComment :
-            skip_single_line(cr);
-            break;
-         case Tokens::ScopeResol :
-            skip_space(cr);
-            tt=next_token(cr, tk);
-            break;
-
-         default :
-         case Tokens::LineEnd :
-         case Tokens::CloseBraces :
-            skip_space(cr);
-            rtsl=cr.nline;
-            rtsp=cr.cp;
-            #if(2==DEBUG)
-               printf("Invalid token (%d - %c) : %u, %d : %d\n",
-                           tt, tt, cr.nline, cr.ncol, cr.offset());
-            #endif
-     }
+         default : default_actions(cr, tt, rtsl, rtsp);
+      }
    }
    fcount && printf("\n");
 }
