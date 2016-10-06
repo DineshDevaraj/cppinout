@@ -24,7 +24,6 @@
 #define skip_char(cr) skip_untill(cr, '\'')
 #define skip_string(cr) skip_untill(cr, '"')
 
-#define skip_args(cr) skip_within(cr, '(', ')')
 #define skip_block(cr) skip_within(cr, '{', '}')
 
 #define skip_single_line(cr) while(*cr++ != '\n')
@@ -134,6 +133,25 @@ void skip_untill(Buffer_t &cr, const char dl)
       if('\\' == *cr) cr++;   /* skip this and next characted
                            as this can be escape sequence */
    cr++;                  /* skip the delimeter at the last */
+}
+
+void skip_args(Buffer_t &cr)
+{
+   int sh;        /* space holder */
+   char *cp;      /* char pointer */
+   Tokens_t tt;   /* token type   */
+
+   for( ; ; )
+   {
+      char tk[256] = {};
+      tt=next_token(cr, tk);
+      switch(tt)
+      {
+			case Tokens::Directive : break;
+         case Tokens::CloseParan : return;
+         default : default_actions(cr, tt, sh, cp);
+      }
+   }
 }
 
 void skip_function_def(Buffer_t &cr)
@@ -342,41 +360,45 @@ void parse_buffer(char *hay)
             break;
          }
 
-         case Tokens::CloseParan : for(int cpl = 1; cpl; )
+         case Tokens::OpenParan :
          {
-            cpl = 0;                /* close paranthesis loop */
-            bssp = cr.cp;
-            skip_space(cr);
-            tt=next_token(cr, tk);
-            if(Tokens::OpenBraces == tt
-               and previden != "if"
-               and previden != "for"
-               and previden != "while"
-               and previden != "switch")
+            skip_args(cr);
+            for(int cpl = 1; cpl; )
             {
-               fcount++;
-               printf("\n%s\n\n", hl);
-               printf("%.*s%.*s\n\n", iend-rtsp, rtsp, bssp-iend, iend);
-               printf("   fentry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
-               skip_function_def(cr);
+               cpl = 0;                /* close paranthesis loop */
+               bssp = cr.cp;
                skip_space(cr);
-               rtsl=cr.nline;
-               rtsp=cr.cp;
+               tt=next_token(cr, tk);
+               if(Tokens::OpenBraces == tt
+                  and previden != "if"
+                  and previden != "for"
+                  and previden != "while"
+                  and previden != "switch")
+               {
+                  fcount++;
+                  printf("\n%s\n\n", hl);
+                  printf("%.*s%.*s\n\n", iend-rtsp, rtsp, bssp-iend, iend);
+                  printf("   fentry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
+                  skip_function_def(cr);
+                  skip_space(cr);
+                  rtsl=cr.nline;
+                  rtsp=cr.cp;
+               }
+               else switch(tt)
+               {
+                  case Tokens::MultiLineComment :
+                       skip_multiline_comment(cr);
+                       cpl=1;
+                       break;
+                  case Tokens::SingleLineComment :
+                       skip_single_line(cr);
+                       cpl=1;
+                       break;
+                  default : goto TTB;
+               }
             }
-            else switch(tt)
-            {
-               case Tokens::MultiLineComment :
-                    skip_multiline_comment(cr);
-                    cpl=1;
-                    break;
-               case Tokens::SingleLineComment :
-                    skip_single_line(cr);
-                    cpl=1;
-                    break;
-               default : goto TTB;
-            }
+            break;
          }
-         break;
 
          default : default_actions(cr, tt, rtsl, rtsp);
       }
