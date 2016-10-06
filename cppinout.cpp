@@ -7,7 +7,7 @@
  *
  **/
 
-/* Compilation command g++ cinout.cpp -o cppio */
+/* Compilation command g++ cppinout.cpp -o cppio */
 
 # include <cstdio>
 # include <string.h>
