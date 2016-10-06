@@ -328,9 +328,10 @@ void parse_buffer(char *hay)
    char *rtsp; /* return type starting position */
    char *iend; /* identifier end                */
 
+   Stdstr ct;        /* construct type      */
    Tokens_t tt;      /* token type          */
    int fcount = 0;   /* number of functions */
-   Stdstr previden;
+   Stdstr previden;  /* previous identifier */
 
    rtsl = 1;
    Buffer_t cr(hay);
@@ -353,13 +354,16 @@ void parse_buffer(char *hay)
          {
             if(0 == strcmp(tk, "class") or 0 == strcmp(tk, "struct"))
             {
-               previden=tk;
+               ct=tk;
                rtsl=cr.nline;
                skip_space(cr);
                tt=next_token(cr, tk); /* This gets the class name */
+               if(tt == Tokens::OpenBraces)
+               { strcpy(tk, "<anonymous>"); }
                printf("\n%s\n\n", hl);
-               printf("%s %s\n\n", previden.data(), tk);
-               printf("   centry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
+               printf("%s %s\n\n", ct.data(), tk);
+               printf("   %centry : %d, %u, %d : %d\n", ct.at(0),
+                           rtsl, cr.nline, cr.ncol, cr.offset());
             }
             previden=tk;
             iend=cr.cp;
