@@ -235,11 +235,6 @@ void parse_buffer(char *hay)
          case Tokens::Space   :
             skip_space(cr);
             break;
-         case Tokens::LineEnd :
-            skip_space(cr);
-            rtsl=cr.nline;
-            rtsp=cr.cp;
-            break;
 
          case Tokens::OpenParan :
                skip_args(cr);
@@ -278,11 +273,7 @@ void parse_buffer(char *hay)
                case Tokens::SingleLineComment : cpl = 1;
                     skip_single_line(cr);
                     break;
-               case Tokens::LineEnd :
-                    skip_space(cr);
-                    rtsl=cr.nline;
-                    rtsp=cr.cp;
-                    break;
+               case Tokens::LineEnd : goto Default;
             }
          }
          break;
@@ -309,15 +300,17 @@ void parse_buffer(char *hay)
             skip_space(cr);
             tt=next_token(cr, tk);
             break;
+
+         Default : default :
+         case Tokens::LineEnd :
          case Tokens::CloseBraces :
             skip_space(cr);
             rtsl=cr.nline;
             rtsp=cr.cp;
-            break;
-         #if(2==DEBUG)
-         default : printf("Invalid token (%d - %c) : %u, %d : %d\n",
+            #if(2==DEBUG)
+               printf("Invalid token (%d - %c) : %u, %d : %d\n",
                            tt, tt, cr.nline, cr.ncol, cr.offset());
-         #endif
+            #endif
      }
    }
    fcount && printf("\n");
