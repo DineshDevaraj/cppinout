@@ -36,12 +36,13 @@ struct Tokens
    {
       Undef             ,
 
+      Colon             = ':' ,
       Space             = ' ' ,
       LineEnd           = ';' ,
       Asterisk          = '*' ,
       CharBegin         = '\'',
       Directive         = '#' ,
-      ScopeResol        = ':' ,
+      ScopeResol        = 'R' ,
       StringBegin       = '"' ,
 
       OpenParan         = '(' ,   /* open paranthesis   */
@@ -49,9 +50,9 @@ struct Tokens
       OpenBraces        = '{' ,   /* open curly braces  */
       CloseBraces       = '}' ,   /* close curly braces */
 
-      Identifier        ,
-      MultiLineComment  ,
-      SingleLineComment ,
+      Identifier        = 'I' ,
+      MultiLineComment  = 'M' ,
+      SingleLineComment = 'S' ,
    };
 };
 
@@ -147,7 +148,7 @@ void skip_args(Buffer_t &cr)
       tt=next_token(cr, tk);
       switch(tt)
       {
-			case Tokens::Directive : break;
+         case Tokens::Directive : break;
          case Tokens::CloseParan : return;
          default : default_actions(cr, tt, sh, cp);
       }
@@ -201,6 +202,7 @@ void default_actions(Buffer_t &cr, Tokens_t tt, int &rtsl, char * &rtsp)
    char tk[256] = {};
    switch(tt) /* ttb - token type branch */
    {
+      case Tokens::Colon :
       case Tokens::Space :
       {
          skip_space(cr);
@@ -264,43 +266,47 @@ Tokens_t next_token(Buffer_t &cr, char st[])
    {
       bwl=1;
      *tk = *cr;
-     switch(*cr)
-     {
-        case ' '  :
-        case '\t' :
-        case '\r' :
-        case '\n' : tt=Tokens::Space;
+      switch(*cr)
+      {
+         case ' '  :
+         case '\t' :
+         case '\r' :
+         case '\n' : tt=Tokens::Space;
                   break;
 
-        case ';'  : tt=Tokens::LineEnd;
+         case ';'  : tt=Tokens::LineEnd;
                  break;
-        case '('  : tt=Tokens::OpenParan;
+         case '('  : tt=Tokens::OpenParan;
                  break;
-        case ')'  : tt=Tokens::CloseParan;
+         case ')'  : tt=Tokens::CloseParan;
                  break;
-        case '{'  : tt=Tokens::OpenBraces;
+         case '{'  : tt=Tokens::OpenBraces;
                  break;
-        case '}'  : tt=Tokens::CloseBraces;
+         case '}'  : tt=Tokens::CloseBraces;
                  break;
 
-       case '\'' : tt=Tokens::CharBegin;
+         case '\'' : tt=Tokens::CharBegin;
                 break;
-       case '"'  : tt=Tokens::StringBegin;
+         case '"'  : tt=Tokens::StringBegin;
                 break;
 
-       case ':'  : if(':' == cr[1])
-         { cr++; tt = Tokens::ScopeResol; }
+         case ':'  :
+         {
+            if(cr[1] != ':')
+            { tt = Tokens::Colon; }
+            else { cr++; tt = Tokens::ScopeResol; }
+         }
          break;
 
-       case '/'  : if('*' == cr[1])
+         case '/'  : if('*' == cr[1])
                   tt=Tokens::MultiLineComment;
                 else if('/' == cr[1])
                   tt=Tokens::SingleLineComment;
                break;
 
-       case '#'  : tt=Tokens::Directive; break;
+         case '#'  : tt=Tokens::Directive; break;
 
-       default : if('_' == *cr or
+         default : if('_' == *cr or
                 ('a' <= *cr and *cr <= 'z') or
                 ('A' <= *cr and *cr <= 'Z'))
                {
@@ -309,7 +315,7 @@ Tokens_t next_token(Buffer_t &cr, char st[])
                   break;
                }
                bwl=0;
-     }
+      }
      tk++; cr++;
    }
    return tt;
