@@ -146,19 +146,25 @@ void skip_function_def(Buffer_t &cr)
    for(int nocb = 1; nocb; )
    {
       char tk[256] = {};
-		tt=next_token(cr, tk);
+      tt=next_token(cr, tk);
       switch(tt)
       {
          case Tokens::OpenBraces :
-              nocb++;
-              break;
+         {
+            nocb++;
+            break;
+         }
          case Tokens::CloseBraces :
-              nocb--;
-              break;
+         {
+            nocb--;
+            break;
+         }
          case Tokens::Identifier :
-              if(0 == strcasecmp(tk, "return"))
-                 printf("   return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
-              break;
+         {
+            if(0 == strcasecmp(tk, "return"))
+               printf("   return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
+            break;
+         }
          default : default_actions(cr, tt, sh, cp);
       }
    }
@@ -227,7 +233,7 @@ void default_actions(Buffer_t &cr, Tokens_t tt, int &rtsl, char * &rtsp)
          rtsl=cr.nline;
          rtsp=cr.cp;
       }
-  }
+   }
 }
 
 /* st -> string token */
