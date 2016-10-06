@@ -396,14 +396,25 @@ void parse_buffer(char *hay)
                }
                else switch(tt)
                {
+                  case Tokens::Identifier :
+                  if(0 == strcmp(tk, "const"))
+                  {
+                     cpl=1;
+                     break;
+                  }
+                  else goto TTB;
                   case Tokens::MultiLineComment :
-                       skip_multiline_comment(cr);
-                       cpl=1;
-                       break;
+                  {
+                     skip_multiline_comment(cr);
+                     cpl=1;
+                     break;
+                  }
                   case Tokens::SingleLineComment :
-                       skip_single_line(cr);
-                       cpl=1;
-                       break;
+                  {
+                     skip_single_line(cr);
+                     cpl=1;
+                     break;
+                  }
                   default : goto TTB;
                }
             }
