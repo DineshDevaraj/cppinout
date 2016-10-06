@@ -135,17 +135,27 @@ void skip_untill(Buffer_t &cr, const char dl)
    cr++;                  /* skip the delimeter at the last */
 }
 
-void skip_function_def(Buffer_t &cr, char tk[])
+void skip_function_def(Buffer_t &cr)
 {
    Tokens_t tt;
-   int nocb = 1; /* number of open curly barces */
-   while(nocb)
+   /* number of open curly barces */
+   for(int nocb = 1; nocb; )
    {
+      char tk[256] = {};
       tt=next_token(cr, tk);
-      if(tt == Tokens::OpenBraces)
-         nocb++;
-      else if(tt == Tokens::CloseBraces)
-         nocb--;
+      switch(tt)
+      {
+         case Tokens::OpenBraces :
+              nocb++;
+              break;
+         case Tokens::CloseBraces :
+              nocb--;
+              break;
+         case Tokens::Identifier :
+              if(0 == strcasecmp(tk, "return"))
+                 printf("   return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
+              break;
+      }
    }
 }
 
@@ -244,14 +254,10 @@ void parse_buffer(char *hay)
       #if(1==DEBUG)
       printf("Token (%d %c) : <%s> %u,%d\n", tt, tt, tk, cr.nline, cr.ncol);
       #endif
-      switch(tt)
+      TTB : switch(tt) /* ttb - token type branch */
       {
          case Tokens::Identifier :
-            if(0 == strcasecmp(tk, "return"))
-            {
-               printf("   return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
-            }
-            else if(0 == strcmp(tk, "class") or 0 == strcmp(tk, "struct"))
+            if(0 == strcmp(tk, "class") or 0 == strcmp(tk, "struct"))
             {
                previden=tk;
                rtsl=cr.nline;
@@ -289,25 +295,22 @@ void parse_buffer(char *hay)
                printf("\n%s\n\n", hl);
                printf("%.*s%.*s\n\n", iend-rtsp, rtsp, bssp-iend, iend);
                printf("   fentry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
-               skip_function_def(cr, tk);
+               skip_function_def(cr);
                skip_space(cr);
+               rtsl=cr.nline;
                rtsp=cr.cp;
             }
             else switch(tt)
             {
-               case Tokens::CharBegin :
-                    skip_char(cr);
-                    break;
-               case Tokens::StringBegin :
-                    skip_string(cr);
-                    break;
-               case Tokens::MultiLineComment : cpl = 1;
+               case Tokens::MultiLineComment :
                     skip_multiline_comment(cr);
+                    cpl=1;
                     break;
-               case Tokens::SingleLineComment : cpl = 1;
+               case Tokens::SingleLineComment :
                     skip_single_line(cr);
+                    cpl=1;
                     break;
-               case Tokens::LineEnd : goto Default;
+               default : goto TTB;
             }
          }
          break;
@@ -335,7 +338,7 @@ void parse_buffer(char *hay)
             tt=next_token(cr, tk);
             break;
 
-         Default : default :
+         default :
          case Tokens::LineEnd :
          case Tokens::CloseBraces :
             skip_space(cr);
