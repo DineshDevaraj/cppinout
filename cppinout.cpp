@@ -202,7 +202,6 @@ void default_actions(Buffer_t &cr, Tokens_t tt, int &rtsl, char * &rtsp)
    char tk[256] = {};
    switch(tt) /* ttb - token type branch */
    {
-      case Tokens::Colon :
       case Tokens::Space :
       {
          skip_space(cr);
@@ -396,6 +395,11 @@ void parse_buffer(char *hay)
                }
                else switch(tt)
                {
+                  case Tokens::Colon :
+                  {
+                     cpl=1;
+                     break;
+                  }
                   case Tokens::Identifier :
                   if(0 == strcmp(tk, "const"))
                   {
