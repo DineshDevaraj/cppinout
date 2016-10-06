@@ -204,13 +204,17 @@ Tokens_t next_token(Buffer_t &cr, char st[])
 
 void parse_buffer(char *hay)
 {
-   char *iend;       /* identifier end                */
-   char *rtsp;       /* return type starting position */
+   int rtsl;   /* return type starting line */
+   char *rtsp; /* return type starting position */
+   char *iend; /* identifier end                */
+   
    Tokens_t tt;      /* token type                    */
    int fcount = 0;   /* number of functions           */
-   Buffer_t cr(hay);
    Stdstr previden;
-   rtsp = cr.cp;
+   
+   rtsp = hay;
+   Buffer_t cr(hay);
+   
    while(*cr)
    {
       char tk[256] = {};
@@ -271,6 +275,10 @@ void parse_buffer(char *hay)
                     break;
                case Tokens::SingleLineComment : cpl = 1;
                     skip_single_line(cr);
+                    break;
+               case Tokens::LineEnd :
+                    skip_space(cr);
+                    rtsp = cr.cp;
                     break;
             }
          }
