@@ -260,7 +260,7 @@ void parse_buffer(char *hay)
                memset(tk, '-', 100);
                int len = cr.cp-iend-1;
                printf("\n%s\n\n", tk);
-               printf("%.*s%.*s\n", iend-rtsp-1, rtsp, len, iend);
+               printf("%.*s%.*s\n", iend-rtsp, rtsp, len, iend);
                if('\n' != iend[len-1]) printf("\n");
                printf("   entry  : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
             }
