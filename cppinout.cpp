@@ -230,7 +230,19 @@ void parse_buffer(char *hay)
       {
          case Tokens::Identifier :
             if(0 == strcasecmp(tk, "return"))
+				{
                printf("   return : %u, %d : %d\n", cr.nline, cr.ncol, cr.offset());
+				}
+				else if(0 == strcmp(tk, "class") or 0 == strcmp(tk, "struct"))
+				{
+					previden=tk;
+					rtsl=cr.nline;
+					skip_space(cr);
+					tt=next_token(cr, tk); /* This gets the class name */
+					printf("\n%s\n\n", hl);
+					printf("%s %s\n\n", previden.data(), tk);
+					printf("   centry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
+				}
             previden=tk;
             iend=cr.cp;
             break;
@@ -258,7 +270,7 @@ void parse_buffer(char *hay)
                fcount++;
                printf("\n%s\n\n", hl);
                printf("%.*s%.*s\n\n", iend-rtsp, rtsp, bssp-iend, iend);
-               printf("   entry  : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
+               printf("   fentry : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
             }
             else switch(tt)
             {
