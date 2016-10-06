@@ -184,7 +184,6 @@ Tokens_t next_token(Buffer_t &cr, char st[])
                   tt=Tokens::SingleLineComment;
                break;
 
-       case '*'  : tt=Tokens::Asterisk;  break;
        case '#'  : tt=Tokens::Directive; break;
 
        default : if('_' == *cr or
@@ -204,17 +203,21 @@ Tokens_t next_token(Buffer_t &cr, char st[])
 
 void parse_buffer(char *hay)
 {
-   int rtsl;   /* return type starting line */
+   int   rtsl; /* return type starting line     */
+   char *bssp; /* blank space startnig position */
    char *rtsp; /* return type starting position */
    char *iend; /* identifier end                */
 
-   Tokens_t tt;      /* token type                    */
-   int fcount = 0;   /* number of functions           */
+   Tokens_t tt;      /* token type          */
+   int fcount = 0;   /* number of functions */
    Stdstr previden;
 
    rtsl = 1;
    rtsp = hay;
    Buffer_t cr(hay);
+
+   static char hl[128];   /* horizontal line */
+   memset(hl, '-', 100);
 
    while(*cr)
    {
@@ -243,6 +246,7 @@ void parse_buffer(char *hay)
          case Tokens::CloseParan : for(int cpl = 1; cpl; )
          {
             cpl = 0;                /* close paranthesis loop */
+            bssp = cr.cp;
             skip_space(cr);
             tt=next_token(cr, tk);
             if(Tokens::OpenBraces == tt
@@ -252,11 +256,8 @@ void parse_buffer(char *hay)
                and previden != "switch")
             {
                fcount++;
-               memset(tk, '-', 100);
-               int len = cr.cp-iend-1;
-               printf("\n%s\n\n", tk);
-               printf("%.*s%.*s\n", iend-rtsp, rtsp, len, iend);
-               if('\n' != iend[len-1]) printf("\n");
+               printf("\n%s\n\n", hl);
+               printf("%.*s%.*s\n\n", iend-rtsp, rtsp, bssp-iend, iend);
                printf("   entry  : %d, %u, %d : %d\n", rtsl, cr.nline, cr.ncol, cr.offset());
             }
             else switch(tt)
